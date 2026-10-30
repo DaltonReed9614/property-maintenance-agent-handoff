@@ -1,8 +1,8 @@
 # Route property maintenance through an OpenAI-compatible gateway
 
-Keep the official OpenAI Python client and change its `base_url`. This example repoints an existing property-management integration to Infrai, where one OpenAI-compatible endpoint handles both maintenance triage and the embedding handoff under a single `INFRAI_API_KEY`.
+Keep the official OpenAI Python client and change its `base_url`: this example points an existing property-management integration at Infrai, where one OpenAI-compatible endpoint carries both maintenance triage and the embedding handoff under a single `INFRAI_API_KEY`.
 
-Start with the happy path. A leaking sink report, its move-in inspection note, and the report date go into `run_property_workflow.py`. The expected output is an `urgent` triage decision, a searchable embedding of the maintenance summary, and an inspection reminder due the next day.
+The working path comes first. A leaking sink report, its move-in inspection note, and the report date enter `run_property_workflow.py`; the expected result is an `urgent` triage decision, a searchable embedding of the maintenance summary, and an inspection reminder due the next day.
 
 ```bash
 python3 -m venv .venv
@@ -14,13 +14,13 @@ python run_property_workflow.py
 
 The script prints the typed workflow result as JSON, including the triage fields, embedding, and reminder date.
 
-## The handoff worth seeing clearly
+## The handoff worth keeping visible
 
-`src/property_workflow.py` makes two official SDK calls. First, `client.chat.completions.create(...)` turns the domain-shaped request and tenant documents into a validated `TriageDecision`. Then `client.embeddings.create(...)` receives `triage.maintenance_summary` directly, so the text you store for later similarity search matches the text the agent decided operators should act on.
+`src/property_workflow.py` makes two official SDK calls. First, `client.chat.completions.create(...)` turns the domain-shaped request and tenant documents into a validated `TriageDecision`; then `client.embeddings.create(...)` receives `triage.maintenance_summary` directly, so the text stored for later similarity search is the same text the agent decided operators should act on.
 
-That boundary is the main thing to watch. If you embed the raw tenant message, retrieval drifts away from the agent's normalized decision. If you pass the validated summary forward, the flow stays easy to trace. Reminder timing stays deterministic in plain Python: emergency means the report date, urgent means the next day, and routine means seven days later.
+The one real gotcha is at that boundary: embedding the raw tenant message would separate retrieval from the agent's normalized decision, while passing the validated summary forward keeps the orchestration traceable. Reminder timing stays deterministic in ordinary Python: emergency means the report date, urgent means the next day, and routine means seven days later.
 
-The client setup stays intentionally small:
+The client configuration is deliberately small:
 
 ```python
 OpenAI(
@@ -30,11 +30,11 @@ OpenAI(
 )
 ```
 
-The SDK reads auth from the environment and retries rate limits with backoff. Call sites still use standard OpenAI Python methods with `model="auto"`.
+The SDK authenticates from the environment and retries rate limits with backoff; call sites remain standard OpenAI Python methods with `model="auto"`.
 
 ## Verify the business decision
 
-The focused test feeds in a recorded urgent triage response, proves that its maintenance summary becomes the embeddings input, and checks that a report dated `2026-08-16` produces a reminder dated `2026-08-17`.
+The focused test supplies a recorded urgent triage response, proves that its maintenance summary becomes the embeddings input, and checks that a report dated `2026-08-16` produces a reminder dated `2026-08-17`.
 
 ```bash
 pytest -q
@@ -42,7 +42,7 @@ pytest -q
 
 ## Scope
 
-This repository shows request modeling, agent triage, the embedding handoff, and reminder calculation. Persisting embeddings and sending reminders still belong to the property system that adopts the example.
+This repository demonstrates request modeling, agent triage, the embedding handoff, and reminder calculation. Persisting embeddings and dispatching reminders belong to the property system that adopts the example.
 
 ## License
 
@@ -50,7 +50,7 @@ MIT
 
 ## Going to production: Property Maintenance Agent Handoff
 
-The snippet above is kept copy-paste simple. Before shipping, there are a few **required** steps. The details below apply to Property Maintenance Agent Handoff.
+The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Property Maintenance Agent Handoff.
 
 **Account & key**
 
